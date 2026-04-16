@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Video Downloader</title>
+  <meta name="description" content="Web interface for safe_media_downloader.py">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
+    rel="stylesheet"
+  >
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+  <div class="background-glow glow-a"></div>
+  <div class="background-glow glow-b"></div>
+
+  <main class="page-shell">
+    <section class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">Web Interface</p>
+        <h1>Download video with your Python script through a website.</h1>
+        <p class="lead">
+          Paste a YouTube, HLS, or direct MP4 link, inspect available resolutions,
+          then download through <code>safe_media_downloader.py</code>.
+        </p>
+      </div>
+      <div class="hero-note">
+        <span>Outputs</span>
+        <strong>MP4 and YouTube MP3</strong>
+      </div>
+    </section>
+
+    <section class="panel">
+      <form class="stack" method="post" action="/inspect">
+        <label for="url">Video URL</label>
+        <div class="field-row">
+          <input
+            id="url"
+            name="url"
+            type="url"
+            placeholder="https://www.youtube.com/watch?v=..."
+            value="{{ url or '' }}"
+            required
+          >
+          <button type="submit" class="button button-secondary">Inspect</button>
+        </div>
+      </form>
+
+      {% if error %}
+      <div class="message error">{{ error }}</div>
+      {% endif %}
+
+      {% if info %}
+      <div class="info-grid">
+        <article class="info-card">
+          <span>Source</span>
+          <strong>{{ info.source_type }}</strong>
+        </article>
+        <article class="info-card">
+          <span>Title</span>
+          <strong>{{ info.title }}</strong>
+        </article>
+        <article class="info-card">
+          <span>Resolutions</span>
+          <strong>
+            {% if info.resolutions %}
+              {{ info.resolutions | join(', ') }}
+            {% else %}
+              Auto / single source
+            {% endif %}
+          </strong>
+        </article>
+      </div>
+
+      <form class="download-form" method="post" action="/download">
+        <input type="hidden" name="url" value="{{ url }}">
+
+        <div class="form-grid">
+          <div class="field">
+            <label for="resolution">Resolution</label>
+            <input
+              id="resolution"
+              name="resolution"
+              type="text"
+              placeholder="2160p or 1280x720"
+              value="{{ selected_resolution or '' }}"
+            >
+          </div>
+
+          <div class="field">
+            <label for="media_kind">Format</label>
+            <select id="media_kind" name="media_kind">
+              <option value="mp4" {% if (selected_kind or 'mp4') == 'mp4' %}selected{% endif %}>MP4 video</option>
+              <option value="mp3" {% if selected_kind == 'mp3' %}selected{% endif %}>MP3 audio</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="filename">Filename</label>
+            <input
+              id="filename"
+              name="filename"
+              type="text"
+              placeholder="my-video"
+              value="{{ filename_base or 'video-download' }}"
+            >
+          </div>
+        </div>
+
+        <button type="submit" class="button button-primary">Download</button>
+      </form>
+      {% endif %}
+
+      {% if download_href %}
+      <div class="message success">
+        Download ready:
+        <a href="{{ download_href }}">{{ download_name }}</a>
+      </div>
+      {% endif %}
+    </section>
+  </main>
+</body>
+</html>
