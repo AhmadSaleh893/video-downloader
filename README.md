@@ -26,3 +26,4 @@ Open:
 - This app is a good fit for local use or a real Python host.
 - Vercel is not a great fit for long-running video downloads because serverless functions are short-lived and local storage is temporary.
 - If you still deploy to Vercel, use temporary storage under `/tmp` and return the file directly in the same request instead of relying on a persistent `downloads/` directory.
+- For Vercel, bundle a Linux `ffmpeg` binary at `bin/ffmpeg` inside this repo so the downloader can find it at runtime.

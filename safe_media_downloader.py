@@ -11,7 +11,7 @@ Features:
 
 Requirements:
 - Python 3.10+
-- ffmpeg installed and available in PATH
+- ffmpeg installed and available in PATH, or bundled in the project
 - requests
 - yt-dlp for YouTube support
 
@@ -62,7 +62,10 @@ class HLSVariant:
 
 def require_ffmpeg() -> None:
     if resolve_ffmpeg_command() is None:
-        raise RuntimeError("ffmpeg is not installed or not in PATH.")
+        raise RuntimeError(
+            "ffmpeg is not installed or not in PATH. "
+            "On Vercel, bundle a Linux ffmpeg binary at bin/ffmpeg."
+        )
 
 
 def require_ytdlp() -> None:
@@ -82,6 +85,9 @@ def resolve_ffmpeg_command() -> Optional[str]:
         return system_ffmpeg
 
     bundled_patterns = [
+        SCRIPT_DIR / "bin" / "ffmpeg",
+        SCRIPT_DIR / "ffmpeg" / "bin" / "ffmpeg",
+        SCRIPT_DIR / "ffmpeg" / "ffmpeg",
         SCRIPT_DIR / "ffmpeg" / "bin" / "ffmpeg.exe",
         SCRIPT_DIR / "ffmpeg" / "ffmpeg.exe",
         SCRIPT_DIR / "ffmpeg.exe",
