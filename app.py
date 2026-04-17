@@ -1,15 +1,18 @@
 from __future__ import annotations
 
+import os
 import re
 import sys
+import tempfile
 from pathlib import Path
 from typing import Any
 
-from flask import Flask, render_template, request, send_from_directory, url_for
+from flask import Flask, render_template, request, send_file, send_from_directory, url_for
 
 BASE_DIR = Path(__file__).resolve().parent
 PROJECT_DIR = BASE_DIR.parent
-DOWNLOAD_DIR = BASE_DIR / "downloads"
+IS_VERCEL = Path("/var/task").exists() or ("VERCEL" in os.environ)
+DOWNLOAD_DIR = (Path(tempfile.gettempdir()) / "downloads") if IS_VERCEL else (BASE_DIR / "downloads")
 DOWNLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
 if str(PROJECT_DIR) not in sys.path:
@@ -83,18 +86,18 @@ def summarize_url(url: str) -> dict[str, Any]:
     raise ValueError("Unsupported URL. Use a YouTube, .m3u8, or .mp4 link.")
 
 
-def perform_download(url: str, resolution: str | None, media_kind: str, filename_base: str) -> str:
+def perform_download(url: str, resolution: str | None, media_kind: str, filename_base: str) -> Path:
     output_path = DOWNLOAD_DIR / f"{slugify_filename(filename_base)}{pick_extension(media_kind)}"
 
     if media_kind == "mp3":
         if is_youtube_url(url):
             download_youtube_to_mp3(url, output_path)
-            return output_path.name
+            return output_path
         raise ValueError("MP3 output is currently supported for YouTube links only.")
 
     if is_youtube_url(url):
         download_youtube_to_mp4(url, output_path, resolution or None)
-        return output_path.name
+        return output_path
 
     if is_m3u8_url(url):
         variants = parse_hls_master(url)
@@ -103,11 +106,11 @@ def perform_download(url: str, resolution: str | None, media_kind: str, filename
             download_hls_to_mp4(chosen.url, output_path)
         else:
             download_hls_to_mp4(url, output_path)
-        return output_path.name
+        return output_path
 
     if is_mp4_url(url):
         download_file(url, output_path)
-        return output_path.name
+        return output_path
 
     raise ValueError("Unsupported URL. Use a YouTube, .m3u8, or .mp4 link.")
 
@@ -149,7 +152,10 @@ def download():
         if not url:
             raise ValueError("Please enter a video URL.")
         info = summarize_url(url)
-        download_name = perform_download(url, resolution, media_kind, filename_base)
+        output_path = perform_download(url, resolution, media_kind, filename_base)
+        if IS_VERCEL:
+            return send_file(output_path, as_attachment=True, download_name=output_path.name)
+        download_name = output_path.name
         download_href = url_for("serve_download", filename=download_name)
     except Exception as exc:
         error = str(exc)
