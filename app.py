@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import os
 import re
-import sys
 import tempfile
 from pathlib import Path
 from typing import Any
@@ -10,13 +9,9 @@ from typing import Any
 from flask import Flask, render_template, request, send_file, send_from_directory, url_for
 
 BASE_DIR = Path(__file__).resolve().parent
-PROJECT_DIR = BASE_DIR.parent
 IS_VERCEL = Path("/var/task").exists() or ("VERCEL" in os.environ)
 DOWNLOAD_DIR = (Path(tempfile.gettempdir()) / "downloads") if IS_VERCEL else (BASE_DIR / "downloads")
 DOWNLOAD_DIR.mkdir(parents=True, exist_ok=True)
-
-if str(PROJECT_DIR) not in sys.path:
-    sys.path.insert(0, str(PROJECT_DIR))
 
 from safe_media_downloader import (  # noqa: E402
     choose_variant,
